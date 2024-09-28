@@ -1,17 +1,18 @@
+import { Fraction } from "./fraction"
 import { findMultiplier } from "./ppcm"
 
 // export type Item = typeof items[keyof typeof items]
 export type CraftNeed<Item> = {
     key: Item,
-    quantity: number
+    quantity: Fraction
 }
 export type Craft<Item> = {
-    time: number,
-    quantity: number,
+    time: Fraction,
+    quantity: Fraction,
     needs: Array<CraftNeed<Item>>
 }
 
-export type Need<Item> = { item: Item, quantity: number, source: string }
+export type Need<Item> = { item: Item, quantity: Fraction, source: string }
 export type AggregatedNeed<Item> = Omit<Need<Item>, 'source'> & { source: string[] }
 
 export function printDependencyTree<Item extends string>(
@@ -41,19 +42,19 @@ export function printDependencyTree<Item extends string>(
         return distances
     }
 
-    function fillAllNeeds(item: Item, quantity: number, isFirst = true): Need<Item>[] {
+    function fillAllNeeds(item: Item, quantity: Fraction, isFirst = true): Need<Item>[] {
         const needCrafts: Need<Item>[] = isFirst ?
             [ { item, quantity, source: item } ] : []
         const craft = crafts[item]
-        const totalCraftSpeed = (craft.quantity * quantity) / craft.time
+        const totalCraftSpeed = craft.quantity.multiply(quantity).divide(craft.time)
 
         for (const need of craft.needs) {
             // this can be simplified but it's easier that way
             const needCraft = crafts[need.key];
-            const ratioNeedToItem = need.quantity / craft.quantity
-            const needAmount = totalCraftSpeed * ratioNeedToItem
-            const needSpeed = needCraft.quantity / needCraft.time
-            const needQuantity = needAmount / needSpeed
+            const ratioNeedToItem = need.quantity.divide(craft.quantity)
+            const needAmount = totalCraftSpeed.multiply(ratioNeedToItem)
+            const needSpeed = needCraft.quantity.divide(needCraft.time)
+            const needQuantity = needAmount.divide(needSpeed)
 
             needCrafts.push({ item: need.key, quantity: needQuantity, source: `for ${totalCraftSpeed} ${item}/t` });
 
@@ -70,16 +71,16 @@ export function printDependencyTree<Item extends string>(
 
         for (const need of needs) {
             if (!aggregateNeeds[need.item]) {
-                aggregateNeeds[need.item] = { item: need.item, quantity: 0, source: [] }
+                aggregateNeeds[need.item] = { item: need.item, quantity: new Fraction(0), source: [] }
             }
-            aggregateNeeds[need.item].quantity += need.quantity
+            aggregateNeeds[need.item].quantity = aggregateNeeds[need.item].quantity.add(need.quantity)
             aggregateNeeds[need.item].source.push(need.source)
         }
         return Object.values(aggregateNeeds)
     }
 
     function computeNeeds() {
-        const needCrafts = fillAllNeeds(item, mainMachineQuantity)
+        const needCrafts = fillAllNeeds(item, new Fraction(mainMachineQuantity))
         const aggregatedNeeds = aggregateNeeds(needCrafts)
 
         const distances = computeDistances()
@@ -99,7 +100,7 @@ export function printDependencyTree<Item extends string>(
                 lastDistance = value.distance
                 console.log("╠═ ")
             }
-            console.log(`${value.quantity} ${value.item} machines to produce ${crafts[value.item].quantity * value.quantity} ${value.item} every ${crafts[value.item].time} ticks, step: ${value.distance}`)
+            console.log(`${value.quantity} ${value.item} machines to produce ${crafts[value.item].quantity.multiply(value.quantity)} ${value.item} every ${crafts[value.item].time} ticks, step: ${value.distance}`)
         })
         const ppcm = findMultiplier(machineNeeds.map(m => m.quantity))
         if (ppcm === 1) {
@@ -113,7 +114,7 @@ export function printDependencyTree<Item extends string>(
                 lastDistance = value.distance
                 console.log("╠═ ")
             }
-            console.log(`${value.quantity * ppcm} ${value.item} machines to produce ${crafts[value.item].quantity * value.quantity * ppcm} ${value.item} every ${crafts[value.item].time} ticks, step: ${value.distance}`)
+            console.log(`${value.quantity.multiply(ppcm)} ${value.item} machines to produce ${crafts[value.item].quantity.multiply(value.quantity).multiply(ppcm)} ${value.item} every ${crafts[value.item].time} ticks, step: ${value.distance}`)
         })
         console.log("")
     }

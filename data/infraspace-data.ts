@@ -1,7 +1,8 @@
-export type Item = typeof items[keyof typeof items]
+import { Fraction } from "../fraction";
 
-export type CraftNeed = { key: Item, quantity: number }
-export type Craft = { time: number, quantity: number, needs: Array<CraftNeed> } // time in seconds
+export type Item = typeof items[keyof typeof items]
+export type CraftNeed = { key: Item, quantity: Fraction }
+export type Craft = { time: Fraction, quantity: Fraction, needs: Array<CraftNeed> } // time in seconds
 
 export const items = {
     sand: "sand",
@@ -10,11 +11,11 @@ export const items = {
   } as const;
 
 export const crafts: Record<Item, Craft> = {
-    [items.sand]: { time: 12, quantity: 1, needs: [] },
-    [items.sulfur]: { time: 2.4, quantity: 1, needs: [] },
+    [items.sand]: { time: new Fraction(12), quantity: new Fraction(1), needs: [] },
+    [items.sulfur]: { time: new Fraction(2.4), quantity: new Fraction(1), needs: [] },
     [items.concrete]: {
-        time: 9.6,
-        quantity: 4,
-        needs: [{ key: items.sand, quantity: 1 }, { key: items.sulfur, quantity: 2 }],
+        time: new Fraction(9.6),
+        quantity: new Fraction(4),
+        needs: [{ key: items.sand, quantity: new Fraction(1) }, { key: items.sulfur, quantity: new Fraction(2) }],
     },
 } as const

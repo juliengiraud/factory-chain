@@ -1,5 +1,4 @@
 import { Fraction } from './fraction'
-// import { Fraction } from './node_modules/fractional'
 
 // Fonction pour obtenir le plus petit commun multiple (PPCM)
 function lcm(a: number, b: number): number {
@@ -12,9 +11,7 @@ function lcmList(lst: number[]): number {
     return lst.reduce((a, b) => lcm(a, b));
 }
 
-export function findMultiplier(numbers: number[]): number {
-    const denominators: number[] = numbers.map(n => new Fraction(n).denominator)
+export function findMultiplier(numbers: Fraction[]): number {
+    const denominators: number[] = numbers.map(n => n.getDenominator())
     return lcmList(denominators);
 }
-
-// console.log(new Fraction(5/7))
